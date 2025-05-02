@@ -3,9 +3,17 @@ import java.util.Scanner;
 
 public class HotelManagementSystem {
 
-    public static ArrayList<Room> rooms = new ArrayList<>();
-    public static ArrayList<Customer> customers = new ArrayList<>();
+    private static ArrayList<Room> rooms = new ArrayList<>();
+    private static ArrayList<Customer> customers = new ArrayList<>();
     private static Scanner input = new Scanner(System.in);
+
+    public static ArrayList<Room> getRooms(){
+        return rooms;
+    }
+
+    public static ArrayList<Customer> getCustomers(){
+        return customers;
+    }
 
     public static void main(String[] args) {
         initializeRooms();
@@ -44,17 +52,29 @@ public class HotelManagementSystem {
     }
 
     static void initializeRooms() {
-        rooms.add(new Room(101, "Single", 1500));
-        rooms.add(new Room(102, "Double", 2500));
-        rooms.add(new Room(103, "Single", 1500));
-        rooms.add(new Room(104, "Double", 2500));
+        addRoom(new Room(101, "Single", 1500));
+        addRoom(new Room(102, "Double", 2500));
+        addRoom(new Room(103, "Single", 1500));
+        addRoom(new Room(104, "Double", 2500));
+        addRoom(new Room(105, "Suite", 4000));
+    }
+
+    static void addRoom(Room room){
+        for(Room r: rooms){
+            if(r.getRoomNumber() == room.getRoomNumber()){
+                System.out.println("Error: Room number "+ room.getRoomNumber()+" already exists.");
+                return;
+            }
+        }
+        rooms.add(room);
     }
 
     static void showAvailableRooms() {
         System.out.println("\nAvailable Rooms:");
+        System.out.printf("%-12s %-10s %-10s %-10s%n", "Room Number", "Type", "Price", "Booked");
         boolean hasAvailable = false;
         for (Room room : rooms) {
-            if (!room.isBooked) {
+            if (!room.isBooked()) {
                 room.displayRoomInfo();
                 hasAvailable = true;
             }
@@ -65,38 +85,64 @@ public class HotelManagementSystem {
     }
 
     static void bookRoom() {
-        System.out.print("Enter your name: ");
-        String name = input.nextLine().trim();
-        if (name.isEmpty()) {
-            System.out.println("Name cannot be empty.");
-            return;
-        }
+        String name;
+        do{
+            System.out.print("Enter your name: ");
+            name = input.nextLine().trim();
+            if (name.isEmpty()) {
+                System.out.println("Name cannot be empty. Try Again");
+            }
+        } while (name.isEmpty());
 
-        System.out.print("Enter your phone number: ");
-        String phone = input.nextLine().trim();
-        if (!phone.matches("\\d{10}")) { // Basic phone validation
-            System.out.println("Invalid phone number. Please enter a 10-digit number.");
-            return;
-        }
+        String phone;
+        do{
+            System.out.print("Enter your phone number (10 digits): ");
+            phone = input.nextLine().trim();
+            if (!phone.matches("\\d{10}")) {
+                System.out.println("Invalid phone number. Please enter a 10-digit number.");
+            }
+        } while (!phone.matches("\\d{10}"));
+
 
         showAvailableRooms();
-        System.out.print("Enter room number to book: ");
         int roomNum;
-        try {
-            roomNum = input.nextInt();
-            input.nextLine();
-        } catch (Exception e) {
-            System.out.println("Invalid room number.");
-            input.nextLine();
-            return;
-        }
+        do{
+            System.out.print("Enter room number to book: ");
+            try {
+                roomNum = input.nextInt();
+                input.nextLine();
+                break;
+            } catch (Exception e) {
+                System.out.println("Invalid room number.");
+                input.nextLine();
+            }
+        } while(true);
+
+        int nights;
+        do {
+            System.out.print("Enter number of nights: ");
+            try {
+                nights = input.nextInt();
+                input.nextLine();
+                if (nights <= 0) {
+                    System.out.println("Number of nights must be positive.");
+                    continue;
+                }
+                break;
+            } catch (Exception e) {
+                System.out.println("Invalid input. Please enter a number.");
+                input.nextLine();
+            }
+        } while (true);
 
         for (Room room : rooms) {
-            if (room.roomNumber == roomNum) {
-                if (!room.isBooked) {
-                    room.isBooked = true;
-                    customers.add(new Customer(name, phone, roomNum));
+            if (room.getRoomNumber() == roomNum) {
+                if (!room.isBooked()) {
+                    room.bookRoom();
+                    double totalCost = room.getPrice() * nights;
+                    customers.add(new Customer(name, phone, roomNum, nights, totalCost));
                     System.out.println("Room " + roomNum + " booked successfully for " + name + "!");
+                    System.out.println("Total cost for "+nights + " nights: $" + totalCost);
                     return;
                 } else {
                     System.out.println("Room " + roomNum + " is already booked.");
@@ -109,12 +155,13 @@ public class HotelManagementSystem {
 
     static void viewBookedRooms() {
         System.out.println("\nBooked Rooms:");
+        System.out.printf("%-12s %-10s %-10s %-10s %-20s %-15s %-10s%n", "Room Number", "Type", "Price", "Booked", "Customer Name", "Phone", "Nights");
         boolean hasBookedRooms = false;
         for (Room room : rooms) {
-            if (room.isBooked) {
+            if (room.isBooked()) {
                 room.displayRoomInfo();
                 for (Customer customer : customers) {
-                    if (customer.roomNumber == room.roomNumber) {
+                    if (customer.getRoomNumber() == room.getRoomNumber()) {
                         customer.displayCustomerInfo();
                     }
                 }
@@ -127,27 +174,36 @@ public class HotelManagementSystem {
     }
 
     static void checkOut() {
-        System.out.print("Enter room number to check out: ");
         int roomNum;
-        try {
-            roomNum = input.nextInt();
-            input.nextLine();
-        } catch (Exception e) {
-            System.out.println("Invalid room number.");
-            input.nextLine();
-            return;
-        }
+        do {
+            System.out.print("Enter room number to check out: ");
+            try {
+                roomNum = input.nextInt();
+                input.nextLine();
+                break;
+            } catch (Exception e) {
+                System.out.println("Invalid room number. Please enter a number.");
+                input.nextLine();
+            }
+        } while (true);
 
         for (Room room : rooms) {
-            if (room.roomNumber == roomNum) {
-                if (room.isBooked) {
-                    room.isBooked = false;
-                    for (Customer customer : customers) {
-                        if (customer.roomNumber == roomNum) {
-                            System.out.println("Check-out successful for " + customer.name + " (Room " + roomNum + ")");
-                            customers.remove(customer);
-                            return;
+            if (room.getRoomNumber() == roomNum) {
+                if (room.isBooked()) {
+                    System.out.print("Confirm check-out for room " + roomNum + "? (y/n): ");
+                    if (input.nextLine().trim().toLowerCase().startsWith("y")) {
+                        room.checkOut();
+                        for (Customer customer : new ArrayList<>(customers)) {
+                            if (customer.getRoomNumber() == roomNum) {
+                                System.out.println("Check-out successful for " + customer.getName() + " (Room " + roomNum + ")");
+                                System.out.println("Total cost: $" + customer.getTotalCost());
+                                customers.remove(customer);
+                                return;
+                            }
                         }
+                    } else {
+                        System.out.println("Check-out cancelled.");
+                        return;
                     }
                 } else {
                     System.out.println("Room " + roomNum + " is not booked.");
@@ -159,27 +215,36 @@ public class HotelManagementSystem {
     }
 
     static void cancelBooking() {
-        System.out.print("Enter room number to cancel booking: ");
         int roomNum;
-        try {
-            roomNum = input.nextInt();
-            input.nextLine();
-        } catch (Exception e) {
-            System.out.println("Invalid room number.");
-            input.nextLine();
-            return;
-        }
+        do{
+            System.out.print("Enter room number to cancel booking: ");
+            try {
+                roomNum = input.nextInt();
+                input.nextLine();
+                break;
+            } catch (Exception e) {
+                System.out.println("Invalid room number.");
+                input.nextLine();
+            }
+        } while(true);
+
 
         for (Room room : rooms) {
-            if (room.roomNumber == roomNum) {
-                if (room.isBooked) {
-                    room.isBooked = false;
-                    for (Customer customer : customers) {
-                        if (customer.roomNumber == roomNum) {
-                            System.out.println("Booking cancelled for " + customer.name + " (Room " + roomNum + ")");
-                            customers.remove(customer);
-                            return;
+            if (room.getRoomNumber() == roomNum) {
+                if (room.isBooked()) {
+                    System.out.println("Confirm cancellation for room " + roomNum + "? (y/n): ");
+                    if (input.nextLine().trim().toLowerCase().startsWith("y")) {
+                        room.checkOut();
+                        for (Customer customer : customers) {
+                            if (customer.getRoomNumber() == roomNum) {
+                                System.out.println("Booking cancelled for " + customer.getName() + " (Room " + roomNum + ")");
+                                customers.remove(customer);
+                                return;
+                            }
                         }
+                    } else {
+                        System.out.println("Cancellation aborted.");
+                        return;
                     }
                 } else {
                     System.out.println("Room " + roomNum + " is not booked.");
