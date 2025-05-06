@@ -52,5 +52,4 @@ public class Room {
             r.displayRoomInfo();
         }
     }
-
 }

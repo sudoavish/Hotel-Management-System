@@ -16,8 +16,14 @@ public class Customer {
     public String getName() {
         return name;
     }
+    public String getPhone() {
+        return phone;
+    }
     public int getRoomNumber() {
         return roomNumber;
+    }
+    public int getNights() {
+        return nights;
     }
     public double getTotalCost() {
         return totalCost;
@@ -33,5 +39,4 @@ public class Customer {
             System.out.printf("%-12d %-20s %-15s %-10d $%-9.2f%n", c.roomNumber, c.name, c.phone, c.nights, c.totalCost);
         }
     }
-
 }
